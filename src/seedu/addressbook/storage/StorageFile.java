@@ -17,132 +17,157 @@ import java.nio.file.Paths;
  */
 public class StorageFile {
 
-    /** Default file path used if the user doesn't provide the file name. */
-    public static final String DEFAULT_STORAGE_FILEPATH = "addressbook.txt";
+	/** Default file path used if the user doesn't provide the file name. */
+	public static final String DEFAULT_STORAGE_FILEPATH = "addressbook.txt";
 
-    /* Note: Note the use of nested classes below.
-     * More info https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html
-     */
+	
 
-    /**
-     * Signals that the given file path does not fulfill the storage filepath constraints.
-     */
-    public static class InvalidStorageFilePathException extends IllegalValueException {
-        public InvalidStorageFilePathException(String message) {
-            super(message);
-        }
-    }
+	/*
+	 * Note: Note the use of nested classes below. More info
+	 * https://docs.oracle.com/javase/tutorial/java/javaOO/nested.html
+	 */
 
-    /**
-     * Signals that some error has occured while trying to convert and read/write data between the application
-     * and the storage file.
-     */
-    public static class StorageOperationException extends Exception {
-        public StorageOperationException(String message) {
-            super(message);
-        }
-    }
+	/**
+	 * Signals that the given file path does not fulfill the storage filepath
+	 * constraints.
+	 */
+	public static class InvalidStorageFilePathException extends IllegalValueException {
+		public InvalidStorageFilePathException(String message) {
+			super(message);
+		}
+	}
 
-    private final JAXBContext jaxbContext;
+	/**
+	 * Signals that some error has occured while trying to convert and
+	 * read/write data between the application and the storage file.
+	 */
+	public static class StorageOperationException extends Exception {
+		public StorageOperationException(String message) {
+			super(message);
+		}
+	}
 
-    public final Path path;
+	private final JAXBContext jaxbContext;
 
-    /**
-     * @throws InvalidStorageFilePathException if the default path is invalid
-     */
-    public StorageFile() throws InvalidStorageFilePathException {
-        this(DEFAULT_STORAGE_FILEPATH);
-    }
+	public final Path path;
+	public boolean isFilesExisted;
 
-    /**
-     * @throws InvalidStorageFilePathException if the given file path is invalid
-     */
-    public StorageFile(String filePath) throws InvalidStorageFilePathException {
-        try {
-            jaxbContext = JAXBContext.newInstance(AdaptedAddressBook.class);
-        } catch (JAXBException jaxbe) {
-            throw new RuntimeException("jaxb initialisation error");
-        }
+	/**
+	 * @throws InvalidStorageFilePathException
+	 *             if the default path is invalid
+	 */
+	public StorageFile() throws InvalidStorageFilePathException {
+		this(DEFAULT_STORAGE_FILEPATH);
+	}
 
-        path = Paths.get(filePath);
-        if (!isValidPath(path)) {
-            throw new InvalidStorageFilePathException("Storage file should end with '.txt'");
-        }
-    }
+	/**
+	 * @throws InvalidStorageFilePathException
+	 *             if the given file path is invalid
+	 */
+	public StorageFile(String filePath) throws InvalidStorageFilePathException {
+		try {
+			jaxbContext = JAXBContext.newInstance(AdaptedAddressBook.class);
+		} catch (JAXBException jaxbe) {
+			throw new RuntimeException("jaxb initialisation error");
+		}
 
-    /**
-     * Returns true if the given path is acceptable as a storage file.
-     * The file path is considered acceptable if it ends with '.txt'
-     */
-    private static boolean isValidPath(Path filePath) {
-        return filePath.toString().endsWith(".txt");
-    }
+		path = Paths.get(filePath);
+		if (!isValidPath(path)) {
+			throw new InvalidStorageFilePathException("Storage file should end with '.txt'");
+		}
 
-    /**
-     * Saves all data to this storage file.
-     *
-     * @throws StorageOperationException if there were errors converting and/or storing data to file.
-     */
-    public void save(AddressBook addressBook) throws StorageOperationException {
+		isFilesExisted = CurrentFilePath();
+	}
 
-        /* Note: Note the 'try with resource' statement below.
-         * More info: https://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html
-         */
-        try (final Writer fileWriter =
-                     new BufferedWriter(new FileWriter(path.toFile()))) {
+	/**
+	 * Returns true if the given path is acceptable as a storage file. The file
+	 * path is considered acceptable if it ends with '.txt'
+	 */
+	private static boolean isValidPath(Path filePath) {
+		return filePath.toString().endsWith(".txt");
+	}
 
-            final AdaptedAddressBook toSave = new AdaptedAddressBook(addressBook);
-            final Marshaller marshaller = jaxbContext.createMarshaller();
-            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-            marshaller.marshal(toSave, fileWriter);
+	/**
+	 * Saves all data to this storage file.
+	 *
+	 * @throws StorageOperationException
+	 *             if there were errors converting and/or storing data to file.
+	 */
+	public void save(AddressBook addressBook) throws StorageOperationException {
 
-        } catch (IOException ioe) {
-            throw new StorageOperationException("Error writing to file: " + path);
-        } catch (JAXBException jaxbe) {
-            throw new StorageOperationException("Error converting address book into storage format");
-        }
-    }
+		/*
+		 * Note: Note the 'try with resource' statement below. More info:
+		 * https://docs.oracle.com/javase/tutorial/essential/exceptions/
+		 * tryResourceClose.html
+		 */
+		if (!CurrentFilePath() && isFilesExisted) {
+			throw new StorageOperationException("File not found: " + path);
+		}
+		try (final Writer fileWriter = new BufferedWriter(new FileWriter(path.toFile()))) {
 
-    /**
-     * Loads data from this storage file.
-     *
-     * @throws StorageOperationException if there were errors reading and/or converting data from file.
-     */
-    public AddressBook load() throws StorageOperationException {
-        try (final Reader fileReader =
-                     new BufferedReader(new FileReader(path.toFile()))) {
+			final AdaptedAddressBook toSave = new AdaptedAddressBook(addressBook);
+			final Marshaller marshaller = jaxbContext.createMarshaller();
+			marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+			marshaller.marshal(toSave, fileWriter);
+			
+			isFilesExisted = CurrentFilePath();
+			
+		} catch (IOException ioe) {
+			throw new StorageOperationException("Error writing to file: " + path);
+		} catch (JAXBException jaxbe) {
+			throw new StorageOperationException("Error converting address book into storage format");
+		}
+	}
 
-            final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-            final AdaptedAddressBook loaded = (AdaptedAddressBook) unmarshaller.unmarshal(fileReader);
-            // manual check for missing elements
-            if (loaded.isAnyRequiredFieldMissing()) {
-                throw new StorageOperationException("File data missing some elements");
-            }
-            return loaded.toModelType();
+	/**
+	 * Loads data from this storage file.
+	 *
+	 * @throws StorageOperationException
+	 *             if there were errors reading and/or converting data from
+	 *             file.
+	 */
+	public AddressBook load() throws StorageOperationException {
 
-        /* Note: Here, we are using an exception to create the file if it is missing. However, we should minimize
-         * using exceptions to facilitate normal paths of execution. If we consider the missing file as a 'normal'
-         * situation (i.e. not truly exceptional) we should not use an exception to handle it.
-         */
+		try (final Reader fileReader = new BufferedReader(new FileReader(path.toFile()))) {
 
-        // create empty file if not found
-        } catch (FileNotFoundException fnfe) {
-            final AddressBook empty = new AddressBook();
-            save(empty);
-            return empty;
+			final Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+			final AdaptedAddressBook loaded = (AdaptedAddressBook) unmarshaller.unmarshal(fileReader);
+			// manual check for missing elements
+			if (loaded.isAnyRequiredFieldMissing()) {
+				throw new StorageOperationException("File data missing some elements");
+			}
+			return loaded.toModelType();
 
-        // other errors
-        } catch (IOException ioe) {
-            throw new StorageOperationException("Error writing to file: " + path);
-        } catch (JAXBException jaxbe) {
-            throw new StorageOperationException("Error parsing file data format");
-        } catch (IllegalValueException ive) {
-            throw new StorageOperationException("File contains illegal data values; data type constraints not met");
-        }
-    }
+			/*
+			 * Note: Here, we are using an exception to create the file if it is
+			 * missing. However, we should minimize using exceptions to
+			 * facilitate normal paths of execution. If we consider the missing
+			 * file as a 'normal' situation (i.e. not truly exceptional) we
+			 * should not use an exception to handle it.
+			 */
 
-    public String getPath() {
-        return path.toString();
-    }
+			// create empty file if not found
+		} catch (FileNotFoundException fnfe) {
+			final AddressBook empty = new AddressBook();
+			save(empty);
+			return empty;
+
+			// other errors
+		} catch (IOException ioe) {
+			throw new StorageOperationException("Error writing to file: " + path);
+		} catch (JAXBException jaxbe) {
+			throw new StorageOperationException("Error parsing file data format");
+		} catch (IllegalValueException ive) {
+			throw new StorageOperationException("File contains illegal data values; data type constraints not met");
+		}
+	}
+
+	public String getPath() {
+		return path.toString();
+	}
+
+	public boolean CurrentFilePath() {
+		return path.toFile().exists();
+	}
 
 }
