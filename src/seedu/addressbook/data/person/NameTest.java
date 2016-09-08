@@ -12,16 +12,17 @@ public class NameTest {
 	private Name name;
 
 	@Before
-	public void setup() throws IllegalValueException {
+	public void setup() throws IllegalValueException{
 		name = new Name("John K Smith");
 	}
 
 	@Test
-	public void isSimilar_true() throws IllegalValueException {
+	public void isSimilar_true() throws IllegalValueException{
 		assertFalse(name.isSimilar(null));
 		assertTrue(name.isSimilar(new Name("John K Smith")));
 		assertTrue(name.isSimilar(new Name("John K SMITh")));
 		assertTrue(name.isSimilar(new Name("John Smith")));
+		assertTrue(name.isSimilar(new Name("Smith, John K")));
 	}
 
 }
