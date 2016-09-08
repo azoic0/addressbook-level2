@@ -82,4 +82,12 @@ public interface ReadOnlyPerson {
         }
         return builder.toString();
     }
+    
+    default String getPrintableString(Printable... printables) {
+		String printableString = "";
+		for (Printable printable : printables) {
+			printableString += printable.getPrintableString() + " ";
+		}
+		return printableString.trim();
+	}
 }
