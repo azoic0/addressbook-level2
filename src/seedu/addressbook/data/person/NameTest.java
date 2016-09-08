@@ -15,14 +15,18 @@ public class NameTest {
 	public void setup() throws IllegalValueException{
 		name = new Name("John K Smith");
 	}
+	
+	@Test
+	public void isSimilar_false() throws IllegalValueException{
+		assertFalse(name.isSimilar_notNull(null));
+	}
+	
 
 	@Test
 	public void isSimilar_true() throws IllegalValueException{
-		assertFalse(name.isSimilar(null));
-		assertTrue(name.isSimilar(new Name("John K Smith")));
-		assertTrue(name.isSimilar(new Name("John K SMITh")));
-		assertTrue(name.isSimilar(new Name("John Smith")));
-		assertTrue(name.isSimilar(new Name("Smith, John K")));
+		assertTrue(name.isSimilar_ignoreCase(new Name("John K SMITh")));
+		assertTrue(name.isSimilar_contains(new Name("John Smith")));
+		assertTrue(name.isSimilar_comma(new Name("Smith, John K")));
 	}
 
 }

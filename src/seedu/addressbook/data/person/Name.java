@@ -43,22 +43,30 @@ public class Name {
         return fullName.hashCode();
     }
     
-    public boolean isSimilar(Name other){
+    public boolean isSimilar_notNull(Name other){
     	if(other == null){
     		return false;
-    	} else{
-    		if(fullName.equalsIgnoreCase(other.toString())){
-    			return true;
-    		}else{
-    			List<String> splitOther = other.getWordsInName();
-    			 for (String string : splitOther){
-    				  if (fullName.contains(string)){
-    					  return true;
-    				  }
-    			 }
-    			 return false;
-    		}
-    	}    	
+    	}else{
+    		return true;
+    	}
+    }  	
+    
+    public boolean isSimilar_ignoreCase(Name other){
+    	return (fullName.equalsIgnoreCase(other.toString()));
     }
-
+    
+    public boolean isSimilar_contains(Name other){
+    	return getWordsInName().containsAll(other.getWordsInName());
+    }
+    
+    public boolean isSimilar_comma(Name other){
+    	List<String> splitOther = other.getWordsInName();
+		 for (String string : splitOther){
+			  if (fullName.contains(string)){
+				  return true;
+			  }
+		 }
+		 return false;
+    }
+    
 }
