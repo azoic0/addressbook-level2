@@ -21,6 +21,7 @@ public class NameTest {
 		assertFalse(name.isSimilar(null));
 		assertTrue(name.isSimilar(new Name("John K Smith")));
 		assertTrue(name.isSimilar(new Name("John K SMITh")));
+		assertTrue(name.isSimilar(new Name("John Smith")));
 	}
 
 }
